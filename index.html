@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="New Style Maxima - Reserva tu turno online">
+    <title>New Style Maxima | Peluquería</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Estilos para el Slider de Fotos */
+.slider-container {
+    display: flex;
+    overflow-x: auto; /* Permite el deslizamiento horizontal */
+    scroll-snap-type: x mandatory; /* Hace que las fotos "encajen" al deslizar */
+    gap: 0px; /* Sin espacio entre fotos */
+    scroll-behavior: smooth; 
+    -webkit-overflow-scrolling: touch; /* Mejora el deslizamiento en dispositivos táctiles */
+     
+}
+
+/* Esconde la barra de scroll para que se vea más limpio */
+.slider-container::-webkit-scrollbar {
+    display: none;
+}
+
+.slider-foto {
+    flex: 0 0 100%; /* Cada foto ocupa el 100% del ancho del contenedor */
+    scroll-snap-align: center; /* Alinea cada foto al centro del contenedor al deslizar */
+    height: 650px;
+    object-fit: cover; /* Asegura que la foto cubra todo el espacio sin distorsionarse */
+    display: block; /* Elimina el espacio debajo de las imágenes */ 
+   
+    
+
+}
+
+/* Ajuste para que el formulario no se estire demasiado */
+.caja-form {
+    max-width: 500px;/*le da el ancho máximo de la foto donde deslizamos*/
+    margin: 20px auto;   /* Centra la caja en la página el 20px lo pone bien al centro*/
+}   
+
+        :root {
+            --dorado: #d4af37;
+            --oscuro: #121212;
+            --gris: #1f1f1f;
+            --blanco: #ffffff;
+            --rojo: #ff4d4d;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background-color: var(--oscuro); color: var(--blanco); scroll-behavior: smooth; }
+
+        /* Navegación (Sin 'Mi Cuenta') */
+        header {
+            background: rgba(18, 18, 18, 0.95);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 2px solid var(--dorado);
+        }
+        .logo { color: var(--dorado); font-weight: 600; font-size: 1.5rem; }
+        nav a { color: var(--blanco); text-decoration: none; margin-left: 15px; font-size: 0.9rem; }
+
+        /* Portada */
+        .hero {
+            height: 110vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),url('marilym2.jpeg');
+            background-size: cover;
+            background-position: center;
+            margin-top: 60px;
+        }
+        .hero h1 { font-size: 2.5rem; color: var(--dorado); }
+
+        /* Secciones */
+        section { padding: 60px 5%; max-width: 1000px; margin: auto; }
+        h2 { text-align: center; color: var(--dorado); margin-bottom: 30px; }
+
+        /* Lista de Precios */
+        .cortes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .corte-card {
+            background: var(--gris);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            text-align: center;
+        }
+        .precio { color: var(--dorado); font-size: 1.2rem; font-weight: bold; }
+
+        /* Formulario de Reserva */
+        .reserva-box {
+            background: var(--gris);
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            margin: auto;
+        }
+        label { display: block; margin-top: 15px; font-size: 0.9rem; color: #ccc; }
+        input, select, button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 5px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 5px;
+        }
+        
+        /* Estilo para turnos ocupados */
+        option.ocupado {
+            color: var(--rojo);
+            background: #441111;
+        }
+
+        button {
+            background: var(--dorado);
+            color: var(--oscuro);
+            font-weight: bold;
+            margin-top: 25px;
+            cursor: pointer;
+            border: none;
+        }
+        button:hover { background: #b8962d; }
+
+        @media (max-width: 600px) {
+            header { justify-content: center; }
+            nav { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">NEW STYLE MAXIMA</div>
+        <nav>
+            <a href="#precios">Precios</a>
+            <a href="#agendar">Reservar</a>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <h1>New Style Maxima</h1>
+        <p>Tu estilo en nuestras manos</p>
+    </section>
+
+    <section id="precios">
+        <h2>Cortes y Precios </h2>
+        <h3>("Los precios varian según largo y cantidad de cabello")</h3> 
+        <div class="cortes-grid">
+            <div class="corte-card">
+                <h3>Corte </h3>
+                <p class="precio">$20.000</p>
+            </div>
+            <div class="corte-card">
+                <h3>Alisado o Keratina Desde</h3>
+                <p class="precio">$33.000</p>
+            </div>
+            <div class="corte-card">
+                <h3>Color Largo (Desde)</h3>
+                <p class="precio">$37.000</p>
+            </div>
+            <div class="corte-card">
+                <h3>Balayge, Iluminación Claritos (desde)</h3>
+                <p class="precio">$55.000</p>     
+        </div>
+    </section>
+
+        <div class="caja-form">
+            <h2>Nuestros Trabajos</h2>
+            <div class="slider-container">
+                <img src="foto1.jpeg" class="slider-foto" alt="Trabajo 1">
+                <img src="foto2.jpeg" class="slider-foto" alt="Trabajo 2">
+                <img src="foto3.jpeg" class="slider-foto" alt="Trabajo 3">
+                <img src="foto4.jpeg" class="slider-foto" alt="Trabajo 4">
+                <img src="foto5.jpeg" class="slider-foto" alt="Trabajo 6">
+                <img src="foto6.jpeg" class="slider-foto" alt="Trabajo 7">
+                <img src="foto7.jpeg" class="slider-foto" alt="Trabajo 8">
+                <img src="foto8.jpeg" class="slider-foto" alt="Trabajo 9">
+                <img src="foto9.jpeg" class="slider-foto" alt="Trabajo 10">  
+                <img src="foto10.jpeg" class="slider-foto" alt="Trabajo 12">
+                <img src="foto11.jpeg" class="slider-foto" alt="Trabajo 13">
+                <img src="foto12.jpeg" class="slider-foto" alt="Trabajo 14">
+            </div>
+            <p style="text-align: center; font-size: 0.8rem; color: #888; margin-top: 10px;">
+                ← Deslizá para ver más →
+            </p>
+        </div>  
+
+    <section id="agendar">
+        <h2>Agendar Turno</h2>
+        <div class="contenedor-registro">
+            <form id="formTurno">
+                <label>Nombre del Cliente:</label>
+                <input type="text" id="nombreCliente" placeholder="Ej: Juan Pérez" required>
+
+                <label>Selecciona la Fecha:</label>
+                <input type="date" id="fechaCita" required>
+                
+                <label>Selecciona el Horario:</label>
+                <select id="horaCita" required>
+                    <option value="">-- Elige una hora --</option>
+                    <option value="10:00">10:00 AM</option>
+                    <option value="10:30">10:30 AM</option>
+                    <option value="11:30">11:30 AM</option>
+                    <option value="12:00">12:00 PM</option>
+                    <option value="13:30">13:30 PM</option>
+                    <option value="14:00">14:00 PM</option>
+                    <option value="14:30">14:30 PM</option>
+                    <option value="15:00">15:00 PM</option>
+                    <option value="15:30">15:30 PM</option>
+                    <option value="16:00">16:00 PM</option>
+                    <option value="16:30">16:30 PM</option>
+                    <option value="17:00">17:00 PM</option>
+                    <option value="18:30">18:30 PM</option>
+                </select>
+
+                <label>¿Qué servicio quieres?</label>
+                <select id="servicioCita">
+                    <option value="Cortes">Corte</option>
+                    <option value="Color">Color (Según el cabello)</option>
+                    <option value="Alisado o Keratina Desde">Alisado o Keratina </option>            
+                    <option value="RetoqueDeColor">Retoque de Color(Segun el cabello)</option>
+                </select>
+
+                <button type="submit">RESERVAR POR WHATSAPP</button>
+            </form>
+        </div> 
+    </div>
+</section>
+
+    <script>
+        // --- 1. CONFIGURACIÓN DEL WHATSAPP ---
+        const MI_TELEFONO = "5491151812982"; // <-- CAMBIA ESTO por tu número real (con código de país)
+
+        // --- 2. BASE DE DATOS LOCAL (Simulada) ---
+        // Recupera los turnos ya guardados en el navegador
+        let turnosExistentes = JSON.parse(localStorage.getItem('turnos_maxima')) || [];
+
+        // --- 3. FUNCIÓN: BLOQUEAR HORARIOS OCUPADOS ---
+        const actualizarHorarios = () => {
+            const fechaSeleccionada = document.getElementById('fechaCita').value;
+            const selectorHora = document.getElementById('horaCita');
+            const opciones = selectorHora.querySelectorAll('option');
+
+            opciones.forEach(opcion => {
+                // Si la opción tiene un valor de hora
+                if(opcion.value) {
+                    // Buscamos si ya existe un turno para esa fecha y esa hora
+                    const ocupado = turnosExistentes.find(t => t.fecha === fechaSeleccionada && t.hora === opcion.value);
+                    
+                    if(ocupado) {
+                        opcion.innerText = `${opcion.value} - TURNO RESERVADO`;
+                        opcion.classList.add('ocupado');
+                        opcion.disabled = true; // No permite seleccionarlo
+                    } else {
+                        // Limpia el estado si la fecha cambia a una libre
+                        opcion.innerText = opcion.value;
+                        opcion.classList.remove('ocupado');
+                        opcion.disabled = false;
+                    }
+                }
+            });
+        };
+
+        // --- 4. FUNCIÓN: ENVIAR RESERVA ---
+        const enviarReserva = (e) => {
+            e.preventDefault();
+
+            const nombre = document.getElementById('nombreCliente').value;
+            const fecha = document.getElementById('fechaCita').value;
+            const hora = document.getElementById('horaCita').value;
+            const servicio = document.getElementById('servicioCita').value;
+
+            // Guardar en la "base de datos" local
+            const nuevoTurno = { nombre, fecha, hora, servicio };
+            turnosExistentes.push(nuevoTurno);
+            localStorage.setItem('turnos_maxima', JSON.stringify(turnosExistentes));
+
+            // Crear el mensaje para WhatsApp
+            const mensaje = `Hola New Style Maxima! Quiero agendar un turno:%0A*Nombre:* ${nombre}%0A*Fecha:* ${fecha}%0A*Hora:* ${hora}%0A*Servicio:* ${servicio}`;
+            
+            // Abrir WhatsApp con el mensaje armado
+            const url = `https://wa.me/${MI_TELEFONO}?text=${mensaje}`;
+            window.open(url, '_blank');
+
+            // Refrescar visualmente el formulario
+            actualizarHorarios();
+            document.getElementById('formTurno').reset();
+        };
+
+        // --- 5. INICIALIZACIÓN ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Establece el mínimo de fecha a hoy
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('fechaCita').setAttribute('min', hoy);
+
+            // Escuchar cuando cambian la fecha para marcar las horas ocupadas
+            document.getElementById('fechaCita').addEventListener('change', actualizarHorarios);
+
+            // Escuchar el envío del formulario
+            document.getElementById('formTurno').addEventListener('submit', enviarReserva);
+        });
+    </script>
+</body>
+</html>

@@ -271,13 +271,14 @@ function obtenerDiaDeLaSemana(fechaTexto) {
     return fecha.getDay(); // 0 es Domingo
     }
         // --- 3. FUNCIÓN: BLOQUEAR HORARIOS OCUPADOS ---
-        const actualizarHorarios = () => {
-            const inputFecha = document.getElementById('fechaCita');
+const actualizarHorarios = () => {
+    const inputFecha = document.getElementById('fechaCita');
     const fechaSeleccionada = inputFecha.value;
     const selectorHora = document.getElementById('horaCita');
     const opciones = selectorHora.querySelectorAll('option');
 
     if (!fechaSeleccionada) return;
+    const dia = obtenerDiaDeLaSemana(fechaSeleccionada);//defino variable dia y le asigno el resultado del método helper que me dice el día de la semana de la fecha seleccionada
         if (dia === 0) {
         alert("Los Domingos Cerrado");
         inputFecha.value = ""; 
@@ -289,6 +290,7 @@ function obtenerDiaDeLaSemana(fechaTexto) {
         inputFecha.value = "";
         return; // "Corta" la función acá
     }
+        //Bloqueo de horas reservadas
             opciones.forEach(opcion => {
                 // Si la opción tiene un valor de hora
                 if(opcion.value) {
@@ -311,28 +313,46 @@ function obtenerDiaDeLaSemana(fechaTexto) {
 
         // --- 4. FUNCIÓN: ENVIAR RESERVA ---
         const enviarReserva = (e) => {
-            e.preventDefault();
+        e.preventDefault();// Evita que la página se recargue al enviar el formulario   
 
             const nombre = document.getElementById('nombreCliente').value;
             const fecha = document.getElementById('fechaCita').value;
             const hora = document.getElementById('horaCita').value;
             const servicio = document.getElementById('servicioCita').value;
 
+            // 1. VALIDACIÓN EXTRA (Estilo Java: prevenir nulos)
+          if (!nombre || !fecha || !hora) {
+           alert("Por favor, completa todos los campos.");
+           return;
+           }
+
+           // --- SOLUCIÓN ERROR 2: Evitar reserva duplicada ---
+        const yaExiste = turnosExistentes.some(t => t.fecha === fecha && t.hora === hora);
+        
+        if (yaExiste) {
+            alert("¡Ups! Alguien acaba de reservar este horario. Por favor elige otro.");
+            actualizarHorarios(); // Refrescamos la lista para que vea el cambio
+            return;
+        }
             // Guardar en la "base de datos" local
             const nuevoTurno = { nombre, fecha, hora, servicio };
             turnosExistentes.push(nuevoTurno);
             localStorage.setItem('turnos_maxima', JSON.stringify(turnosExistentes));
 
-            // Crear el mensaje para WhatsApp
-            const mensaje = `Hola New Style Maxima! Quiero agendar un turno:%0A*Nombre:* ${nombre}%0A*Fecha:* ${fecha}%0A*Hora:* ${hora}%0A*Servicio:* ${servicio}`;
-            
-            // Abrir WhatsApp con el mensaje armado
-            const url = `https://wa.me/${MI_TELEFONO}?text=${mensaje}`;
-            window.open(url, '_blank');
-
             // Refrescar visualmente el formulario
             actualizarHorarios();
+
+           // Crear el mensaje para WhatsApp
+            const mensaje = `Hola New Style Maxima! Quiero agendar un turno:%0A*Nombre:* ${nombre}%0A*Fecha:* ${fecha}%0A*Hora:* ${hora}%0A*Servicio:* ${servicio}`;
+            
+            // Abrir WhatsApp con el mensaje armado si es celular, o nueva si es PC
+            const url = `https://wa.me/${MI_TELEFONO}?text=${mensaje}`;
+            //Brimos en la misma pestaña 
+            window.open(url, '_blank');
+
+            // 5. LIMPIAR FORMULARIO
             document.getElementById('formTurno').reset();
+            alert("¡Turno registrado! Si no se abrió WhatsApp, contactanos al " + MI_TELEFONO);
         };
 
         // --- 5. INICIALIZACIÓN ---

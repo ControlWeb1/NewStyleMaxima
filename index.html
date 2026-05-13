@@ -31,11 +31,18 @@
     height: 650px;
     object-fit: cover; /* Asegura que la foto cubra todo el espacio sin distorsionarse */
     display: block; /* Elimina el espacio debajo de las imágenes */ 
-   
-    
-
+}
+/* Estilo para la nota debajo de Cortes y Precios */
+.nota-precios {
+    text-align: center;    /* Centra el texto */
+    display: block;        /* Asegura que ocupe todo el ancho */
+    margin: 20px 0 40px 0; /* 20px de margen arriba y 40px abajo para separar de la lista */
+    font-weight: 300;      /* Un poco más fino para que no compita con el título puedo poner normal si quiero */
+    color: #bbb;           /* Un gris claro */
 }
 
+
+        
 /* Ajuste para que el formulario no se estire demasiado */
 .caja-form {
     max-width: 500px;/*le da el ancho máximo de la foto donde deslizamos*/
@@ -156,12 +163,12 @@
 
     <section class="hero">
         <h1>New Style Maxima</h1>
-        <p>Tu estilo en nuestras manos</p>
+        <p>Tu Estilo en Nuestras Manos</p>
     </section>
 
     <section id="precios">
         <h2>Cortes y Precios </h2>
-        <h3>("Los precios varian según largo y cantidad de cabello")</h3> 
+        <p class="nota-precios">Los precios varian según largo y cantidad de cabello</p>
         <div class="cortes-grid">
             <div class="corte-card">
                 <h3>Corte </h3>
@@ -247,17 +254,41 @@
     <script>
         // --- 1. CONFIGURACIÓN DEL WHATSAPP ---
         const MI_TELEFONO = "5491151812982"; // <-- CAMBIA ESTO por tu número real (con código de país)
+        // Lista de fechas específicas que el cliente quiera cerrar (Formato: Año-mes-día)
+        // Aquí puedes agregar los sábados que necesites cerrar
+       // const fechasCerradasEspeciales = ["2026-05-16", "2026-05-23"];
 
+        // Déjalo así cuando no quieras bloquear ningún día extra:
+        const fechasCerradasEspeciales = [];
+        
         // --- 2. BASE DE DATOS LOCAL (Simulada) ---
         // Recupera los turnos ya guardados en el navegador
         let turnosExistentes = JSON.parse(localStorage.getItem('turnos_maxima')) || [];
-
+        
+        // B. EL MÉTODO HELPER (Como un método estático en Java)
+function obtenerDiaDeLaSemana(fechaTexto) {
+    const fecha = new Date(fechaTexto + 'T00:00:00');
+    return fecha.getDay(); // 0 es Domingo
+    }
         // --- 3. FUNCIÓN: BLOQUEAR HORARIOS OCUPADOS ---
         const actualizarHorarios = () => {
-            const fechaSeleccionada = document.getElementById('fechaCita').value;
-            const selectorHora = document.getElementById('horaCita');
-            const opciones = selectorHora.querySelectorAll('option');
+            const inputFecha = document.getElementById('fechaCita');
+    const fechaSeleccionada = inputFecha.value;
+    const selectorHora = document.getElementById('horaCita');
+    const opciones = selectorHora.querySelectorAll('option');
 
+    if (!fechaSeleccionada) return;
+        if (dia === 0) {
+        alert("Los Domingos Cerrado");
+        inputFecha.value = ""; 
+        return; // "Corta" la función acá y no sigue
+    }
+
+    if (fechasCerradasEspeciales.includes(fechaSeleccionada)) {
+        alert("La barbería permanecerá cerrada este día.");
+        inputFecha.value = "";
+        return; // "Corta" la función acá
+    }
             opciones.forEach(opcion => {
                 // Si la opción tiene un valor de hora
                 if(opcion.value) {

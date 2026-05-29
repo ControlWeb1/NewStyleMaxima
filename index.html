@@ -496,437 +496,320 @@
             <button type="button" onclick="cerrarModalBorrarTurnos()" style="background:#444; margin-top:20px;">VOLVER AL PANEL</button>
         </div>
     </div>
+<script type="module">
+    // 1. IMPORTACIONES DE FIREBASE
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
-    <script>
-        // --- 1. CONFIGURACIÓN DEL WHATSAPP ---
-        const MI_TELEFONO = "5491170296680"; 
+    // 2. TU CONFIGURACIÓN DE FIREBASE
+    const firebaseConfig = {
+        apiKey: "AIzaSyDcx832BXGV7E0Qwh-eIdhTdIKCoEIOEiY",
+        authDomain: "new-style-maxima.firebaseapp.com",
+        projectId: "new-style-maxima",
+        storageBucket: "new-style-maxima.firebasestorage.app",
+        messagingSenderId: "446712080706",
+        appId: "1:446712080706:web:5a81644c2935b0ba1f80db"
+    };
 
-        const fechasCerradasEspeciales = [];
+    // 3. INICIALIZAR FIREBASE Y LA BASE DE DATOS
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // --- VARIABLES GLOBALES ---
+    const MI_TELEFONO = "5491170296680"; 
+    const fechasCerradasEspeciales = [];
+    let turnosExistentes = []; // Ahora arranca vacío y se llena desde la nube
+
+    // 4. ESCUCHAR LA BASE DE DATOS EN TIEMPO REAL (MAGIA PURA)
+    // Cada vez que alguien guarde o borre un turno, esto se actualiza solo en todos los celulares
+    onSnapshot(collection(db, "turnos"), (snapshot) => {
+        turnosExistentes = snapshot.docs.map(documento => ({
+            id: documento.id, // Guardamos el ID único de Firebase
+            ...documento.data()
+        }));
         
-        // --- 2. BASE DE DATOS LOCAL ---
-        let turnosExistentes = JSON.parse(localStorage.getItem('turnos_maxima')) || [];
-    
-        function obtenerDiaDeLaSemana(fechaTexto) {
-            const fecha = new Date(fechaTexto + 'T00:00:00');
-            return fecha.getDay(); // 0 es Domingo
-        }
-
-        // --- 3. NUEVAS FUNCIONES DE TIEMPO Y CONDICIONES DE DURACIÓN ---
+        actualizarHorarios();
         
-        // Retorna la duración en minutos de cada servicio exacto pedido por el usuario
-        function obtenerDuracionServicio(servicio) {
-            switch(servicio) {
-                case 'Cortes': return 25;
-                case 'RetoqueDeColor': return 60;
-                case 'Color': return 60;
-                case 'Alisado': return 90;
-                case 'Keratina': return 40;
-                default: return 30; 
+        // Si el admin está mirando el panel, le recargamos la lista en vivo
+        if (document.getElementById('panelAdmin').style.display === 'block') {
+            listarTurnosAdmin();
+            if (document.getElementById('modalBorrarTurnos').style.display === 'flex') {
+                listarTurnosBorrar();
             }
         }
+    });
 
-        // Convierte un string de hora (ej: "10:30") a minutos totales desde el inicio del día (ej: 630)
-        function horaAMinutos(horaStr) {
-            const partes = horaStr.split(':');
-            return (parseInt(partes[0], 10) * 60) + parseInt(partes[1], 10);
+    // --- FUNCIONES DE LÓGICA Y TIEMPO ---
+    function obtenerDiaDeLaSemana(fechaTexto) {
+        const fecha = new Date(fechaTexto + 'T00:00:00');
+        return fecha.getDay();
+    }
+
+    function obtenerDuracionServicio(servicio) {
+        switch(servicio) {
+            case 'Cortes': return 25;
+            case 'RetoqueDeColor': return 60;
+            case 'Color': return 60;
+            case 'Alisado': return 90;
+            case 'Keratina': return 40;
+            default: return 30; 
         }
+    }
 
-        // Verifica si un rango de tiempo se pisa con un turno existente usando álgebra de intervalos: max(S1, S2) < min(E1, E2)
-        function verificarSuperposicion(fecha, horaInicioStr, servicio) {
-            const nuevoInicio = horaAMinutos(horaInicioStr);
-            const nuevaDuracion = obtenerDuracionServicio(servicio);
-            const nuevoFin = nuevoInicio + nuevaDuracion;
+    function horaAMinutos(horaStr) {
+        const partes = horaStr.split(':');
+        return (parseInt(partes[0], 10) * 60) + parseInt(partes[1], 10);
+    }
 
-            for (let i = 0; i < turnosExistentes.length; i++) {
-                const t = turnosExistentes[i];
-                if (t.fecha === fecha) {
-                    // Usamos horaActualizada porque si el admin desplazó la agenda, el tiempo real ocupado cambió
-                    const extInicio = horaAMinutos(t.horaActualizada);
-                    const extDuracion = obtenerDuracionServicio(t.servicio);
-                    const extFin = extInicio + extDuracion;
+    function minutosAHora(minutosTotales) {
+        let horas = Math.floor(minutosTotales / 60);
+        let mins = minutosTotales % 60;
+        return `${horas.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+    }
 
-                    if (Math.max(nuevoInicio, extInicio) < Math.min(nuevoFin, extFin)) {
-                        return t; // Retorna el objeto que está causando la colisión
-                    }
+    function verificarSuperposicion(fecha, horaInicioStr, servicio) {
+        const nuevoInicio = horaAMinutos(horaInicioStr);
+        const nuevaDuracion = obtenerDuracionServicio(servicio);
+        const nuevoFin = nuevoInicio + nuevaDuracion;
+
+        for (let i = 0; i < turnosExistentes.length; i++) {
+            const t = turnosExistentes[i];
+            if (t.fecha === fecha) {
+                const extInicio = horaAMinutos(t.horaActualizada);
+                const extDuracion = obtenerDuracionServicio(t.servicio);
+                const extFin = extInicio + extDuracion;
+
+                if (Math.max(nuevoInicio, extInicio) < Math.min(nuevoFin, extFin)) {
+                    return t;
                 }
             }
-            return null;
         }
+        return null;
+    }
 
-        // --- 4. FUNCIÓN: BLOQUEAR HORARIOS OCUPADOS EN VISTA PÚBLICA (CON RANGOS DÍNÁMICOS) ---
-        const actualizarHorarios = () => {
-            const inputFecha = document.getElementById('fechaCita');
-            const fechaSeleccionada = inputFecha.value;
-            const selectorHora = document.getElementById('horaCita');
-            const opciones = selectorHora.querySelectorAll('option');
+    // --- INTERFAZ PÚBLICA ---
+    const actualizarHorarios = () => {
+        const inputFecha = document.getElementById('fechaCita');
+        const fechaSeleccionada = inputFecha ? inputFecha.value : null;
+        const selectorHora = document.getElementById('horaCita');
+        
+        if (!fechaSeleccionada || !selectorHora) return;
 
-            if (!fechaSeleccionada) return;
-
-            const dia = obtenerDiaDeLaSemana(fechaSeleccionada);
-                
-            if (dia === 0) {
-                alert("Los Domingos Cerrado");
-                inputFecha.value = ""; 
-                return;
-            }
-
-            if (fechasCerradasEspeciales.includes(fechaSeleccionada)) {
-                alert("La barbería permanecerá cerrada este día.");
-                inputFecha.value = "";
-                return;
-            }
+        const opciones = selectorHora.querySelectorAll('option');
+        const dia = obtenerDiaDeLaSemana(fechaSeleccionada);
             
-            opciones.forEach(opcion => {
-                if(opcion.value) {
-                    const minutosOpcion = horaAMinutos(opcion.value);
-                    
-                    // Buscamos si la hora de esta opción cae dentro de la duración de algún turno del día
-                    const ocupado = turnosExistentes.find(t => {
-                        if(t.fecha === fechaSeleccionada) {
-                            const inicio = horaAMinutos(t.horaActualizada);
-                            const duracion = obtenerDuracionServicio(t.servicio);
-                            const fin = inicio + duracion;
-                            return (minutosOpcion >= inicio && minutosOpcion < fin);
-                        }
-                        return false;
-                    });
-                    
-                    if(ocupado) {
-                        opcion.innerText = `${opcion.value} - HORA OCUPADA`;
-                        opcion.classList.add('ocupado');
-                        opcion.disabled = true; 
-                    } else {
-                        opcion.innerText = opcion.value;
-                        opcion.classList.remove('ocupado');
-                        opcion.disabled = false;
+        if (dia === 0) {
+            alert("Los Domingos Cerrado");
+            inputFecha.value = ""; 
+            return;
+        }
+
+        if (fechasCerradasEspeciales.includes(fechaSeleccionada)) {
+            alert("La barbería permanecerá cerrada este día.");
+            inputFecha.value = "";
+            return;
+        }
+        
+        opciones.forEach(opcion => {
+            if(opcion.value) {
+                const minutosOpcion = horaAMinutos(opcion.value);
+                
+                const ocupado = turnosExistentes.find(t => {
+                    if(t.fecha === fechaSeleccionada) {
+                        const inicio = horaAMinutos(t.horaActualizada);
+                        const duracion = obtenerDuracionServicio(t.servicio);
+                        const fin = inicio + duracion;
+                        return (minutosOpcion >= inicio && minutosOpcion < fin);
                     }
+                    return false;
+                });
+                
+                if(ocupado) {
+                    opcion.innerText = `${opcion.value} - HORA OCUPADA`;
+                    opcion.classList.add('ocupado');
+                    opcion.disabled = true; 
+                } else {
+                    opcion.innerText = opcion.value;
+                    opcion.classList.remove('ocupado');
+                    opcion.disabled = false;
                 }
-            });
-        };
-
-        // --- 5. FUNCIÓN: ENVIAR RESERVA CLIENTE PÚBLICO ---
-        const enviarReserva = (e) => {
-            e.preventDefault();
-
-            const nombre = document.getElementById('nombreCliente').value;
-            const fecha = document.getElementById('fechaCita').value;
-            const hora = document.getElementById('horaCita').value;
-            const servicio = document.getElementById('servicioCita').value;
-
-            if (!nombre || !fecha || !hora || !servicio) {
-                alert("Por favor, completa todos los campos.");
-                return;
             }
+        });
+    };
 
-            // CONTROL INTELIGENTE DE SUPERPOSICIÓN DE TRABAJOS
-            const conflicto = verificarSuperposicion(fecha, hora, servicio);
-            if (conflicto) {
-                alert(`¡Lo sentimos! Ese horario está reservado  ${conflicto.nombre} (${conflicto.servicio}), quien agendó a las ${conflicto.horaActualizada} hs. Por favor, selecciona otro horario libre.`);
-                actualizarHorarios(); 
-                return;
-            }
+    // Escuchamos el cambio de fecha para actualizar horarios
+    document.getElementById('fechaCita').addEventListener('change', actualizarHorarios);
 
-            const nuevoTurno = { nombre, fecha, horaOriginal: hora, horaActualizada: hora, servicio };
-            turnosExistentes.push(nuevoTurno);
-            localStorage.setItem('turnos_maxima', JSON.stringify(turnosExistentes));
+    // 5. GUARDAR TURNO EN FIREBASE
+    document.getElementById('formTurno').addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-            actualizarHorarios();
+        const nombre = document.getElementById('nombreCliente').value;
+        const fecha = document.getElementById('fechaCita').value;
+        const hora = document.getElementById('horaCita').value;
+        const servicio = document.getElementById('servicioCita').value;
 
+        if (!nombre || !fecha || !hora || !servicio) {
+            alert("Por favor, completa todos los campos.");
+            return;
+        }
+
+        const conflicto = verificarSuperposicion(fecha, hora, servicio);
+        if (conflicto) {
+            alert(`¡Lo sentimos! Ese horario está reservado. Por favor, selecciona otro.`);
+            actualizarHorarios(); 
+            return;
+        }
+
+        const nuevoTurno = { nombre, fecha, horaOriginal: hora, horaActualizada: hora, servicio };
+        
+        try {
+            // Guardamos en la nube (Firestore)
+            await addDoc(collection(db, "turnos"), nuevoTurno);
+            
             const mensaje = `Hola New Style Maxima! Quiero agendar un turno:%0A*Nombre:* ${nombre}%0A*Fecha:* ${fecha}%0A*Hora:* ${hora}%0A*Servicio:* ${servicio}`;
             const url = `https://wa.me/${MI_TELEFONO}?text=${mensaje}`;
-
             window.open(url, '_blank');
 
             document.getElementById('formTurno').reset();
-            alert("¡Turno registrado con éxito!");
-        };
-
-        // --- 6. SISTEMA DE LOGIN Y CONTROL ---
-
-        function abrirModalLogin() {
-            if(document.getElementById('btnAccesoNav').innerText === "Panel Admin Activo") {
-                document.getElementById('vistaPublica').style.display = 'none';
-                document.getElementById('panelAdmin').style.display = 'block';
-            } else {
-                document.getElementById('modalLogin').style.display = 'flex';
-            }
+            alert("¡Turno registrado con éxito en el sistema!");
+        } catch (error) {
+            console.error("Error al guardar: ", error);
+            alert("Hubo un error de conexión al agendar. Intenta de nuevo.");
         }
+    });
 
-        function cerrarModalLogin() {
-            document.getElementById('modalLogin').style.display = 'none';
-            document.getElementById('usuarioAdmin').value = '';
-            document.getElementById('passAdmin').value = '';
-        }
+    // --- SISTEMA DE ADMIN ---
+    document.getElementById('formLoginAdmin').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const usuario = document.getElementById('usuarioAdmin').value;
+        const clave = document.getElementById('passAdmin').value;
 
-        const procesarLogin = (e) => {
-            e.preventDefault();
-            const usuario = document.getElementById('usuarioAdmin').value;
-            const clave = document.getElementById('passAdmin').value;
-
-            if ((usuario === "Maxima" && clave === "1975") || (usuario === "maxima" && clave === "1975")) {
-                cerrarModalLogin();
-                
-                document.getElementById('vistaPublica').style.display = 'none';
-                document.getElementById('panelAdmin').style.display = 'block';
-                
-                document.getElementById('navPrecios').style.display = 'none';
-                document.getElementById('navReservar').style.display = 'none';
-                document.getElementById('btnAccesoNav').innerText = "Panel Admin Activo";
-                
-                const hoy = new Date().toISOString().split('T')[0];
-                document.getElementById('fechaAdmin').value = hoy;
-                listarTurnosAdmin();
-            } else {
-                alert("Usuario o Contraseña incorrectos. Verifica los datos.");
-            }
-        };
-
-        function volverAPartePublica() {
-            document.getElementById('panelAdmin').style.display = 'none';
-            document.getElementById('vistaPublica').style.display = 'block';
-            
-            document.getElementById('navPrecios').style.display = 'inline-block';
-            document.getElementById('navReservar').style.display = 'inline-block';
+        if ((usuario.toLowerCase() === "maxima" && clave === "1975")) {
+            cerrarModalLogin();
+            document.getElementById('vistaPublica').style.display = 'none';
+            document.getElementById('panelAdmin').style.display = 'block';
+            document.getElementById('navPrecios').style.display = 'none';
+            document.getElementById('navReservar').style.display = 'none';
             document.getElementById('btnAccesoNav').innerText = "Panel Admin Activo";
-        }
-
-        function cerrarSesionAdmin() {
-            document.getElementById('panelAdmin').style.display = 'none';
-            document.getElementById('vistaPublica').style.display = 'block';
             
-            document.getElementById('navPrecios').style.display = 'inline-block';
-            document.getElementById('navReservar').style.display = 'inline-block';
-            document.getElementById('btnAccesoNav').innerText = "Acceso";
-            actualizarHorarios();
-        }
-
-        function listarTurnosAdmin() {
-            const fechaSeleccionada = document.getElementById('fechaAdmin').value;
-            const contenedor = document.getElementById('contenedorTurnosDia');
-            
-            if(!fechaSeleccionada) return;
-
-            const turnosDelDia = turnosExistentes.filter(t => t.fecha === fechaSeleccionada);
-            turnosDelDia.sort((a, b) => a.horaActualizada.localeCompare(b.horaActualizada));
-
-            if(turnosDelDia.length === 0) {
-                contenedor.innerHTML = '<p style="color: #666; text-align: center; font-size: 0.9rem;">No hay turnos agendados para este día.</p>';
-                return;
-            }
-
-            contenedor.innerHTML = '';
-            turnosDelDia.forEach(t => {
-                let botonAvisoHtml = '';
-                if(t.horaOriginal !== t.horaActualizada) {
-                    const msgAviso = `Disculpe las molestias , su turno se ha corrido de ${t.horaOriginal} hs a ${t.horaActualizada.replace(':', ' y ')}, cualquier inconveniente mandar un mesaje`;
-                    const urlWha = `https://wa.me/?text=${encodeURIComponent(msgAviso)}`;
-                    
-                    botonAvisoHtml = `<a href="${urlWha}" target="_blank" class="btn-aviso-ws">AVISAR RETRASO</a>`;
-                }
-
-                contenedor.innerHTML += `
-                    <div class="turno-item">
-                        <span>
-                            <b>${t.horaActualizada} hs</b> 
-                            ${t.horaOriginal !== t.horaActualizada ? `<span style="color:#888; font-size:0.8rem;">(Original: ${t.horaOriginal})</span>` : ''} 
-                            - ${t.nombre} <i style="color:var(--dorado); font-size:0.85rem;">(${t.servicio})</i>
-                        </span> 
-                        ${botonAvisoHtml}
-                    </div>`;
-            });
-        }
-
-        function retrasarAgenda(minutosAgregar) {
-            const fechaAdmin = document.getElementById('fechaAdmin').value;
-
-            if(!fechaAdmin) {
-                alert("Por favor selecciona una fecha válida primero.");
-                return;
-            }
-
-            const tieneTurnos = turnosExistentes.some(t => t.fecha === fechaAdmin);
-            if (!tieneTurnos) {
-                alert("No hay ningún turno agendado en esta fecha para modificar.");
-                return;
-            }
-
-            if (!confirm(`¿Confirmas que deseas mover todos los turnos del día ${fechaAdmin} +${minutosAgregar} minutos adelante?`)) {
-                return;
-            }
-
-            turnosExistentes = turnosExistentes.map(turno => {
-                if(turno.fecha === fechaAdmin) {
-                    let partes = turno.horaActualizada.split(':');
-                    let horasEnteras = parseInt(partes[0], 10);
-                    let minutosEnteros = parseInt(partes[1], 10);
-
-                    let minutosTotales = (horasEnteras * 60) + minutosEnteros + minutosAgregar;
-
-                    let nuevasHoras = Math.floor(minutosTotales / 60);
-                    let nuevosMinutos = minutesTotales % 60;
-
-                    let horaString = nuevasHoras < 10 ? '0' + nuevasHoras : nuevasHoras;
-                    let minutoString = nuevosMinutos < 10 ? '0' + nuevosMinutos : nuevosMinutos;
-
-                    turno.horaActualizada = `${horaString}:${minutoString}`;
-                }
-                return turno;
-            });
-
-            localStorage.setItem('turnos_maxima', JSON.stringify(turnosExistentes));
-            listarTurnosAdmin();
-            alert(`¡Agenda desplazada y recalculada con éxito!`);
-        }
-
-        // --- 7. ADMINISTRACIÓN DE TURNOS MANUALES (ADMIN) ---
-
-        function abrirModalAgendarAdmin() {
-            document.getElementById('modalAgendarAdmin').style.display = 'flex';
             const hoy = new Date().toISOString().split('T')[0];
-            document.getElementById('fechaAdminManual').setAttribute('min', hoy);
-        }
-        function cerrarModalAgendarAdmin() {
-            document.getElementById('modalAgendarAdmin').style.display = 'none';
-            document.getElementById('formAgendarAdmin').reset();
-        }
-
-        function guardarTurnoManualAdmin(e) {
-            e.preventDefault();
-            
-            const nombre = document.getElementById('nombreAdminManual').value;
-            const fecha = document.getElementById('fechaAdminManual').value;
-            const hora = document.getElementById('horaAdminManual').value;
-            const servicio = document.getElementById('servicioAdminManual').value;
-
-            if(!nombre || !fecha || !hora || !servicio) {
-                alert("Por favor completa todos los campos.");
-                return;
-            }
-
-            if(obtenerDiaDeLaSemana(fecha) === 0) {
-                alert("Los domingos la peluquería se encuentra cerrada.");
-                return;
-            }
-
-            // CONTROL DE SUPERPOSICIÓN EN GUARDADO MANUAL
-            const conflicto = verificarSuperposicion(fecha, hora, servicio);
-            if(conflicto) {
-                alert(`Error de colisión: Este nuevo turno interfiere con el rango ocupado por el cliente ${conflicto.nombre} (${conflicto.servicio}), agendado a las ${conflicto.horaActualizada} hs.`);
-                return;
-            }
-
-            const nuevoTurnoManual = { nombre, fecha, horaOriginal: hora, horaActualizada: hora, servicio };
-            turnosExistentes.push(nuevoTurnoManual);
-            localStorage.setItem('turnos_maxima', JSON.stringify(turnosExistentes));
-            
+            document.getElementById('fechaAdmin').value = hoy;
             listarTurnosAdmin();
-            cerrarModalAgendarAdmin();
-            alert("¡Turno guardado de forma segura en la base de datos!");
+        } else {
+            alert("Usuario o Contraseña incorrectos.");
+        }
+    });
+
+    function listarTurnosAdmin() {
+        const fechaSeleccionada = document.getElementById('fechaAdmin').value;
+        const contenedor = document.getElementById('contenedorTurnosDia');
+        if(!fechaSeleccionada) return;
+
+        const turnosDelDia = turnosExistentes.filter(t => t.fecha === fechaSeleccionada);
+        turnosDelDia.sort((a, b) => a.horaActualizada.localeCompare(b.horaActualizada));
+
+        if(turnosDelDia.length === 0) {
+            contenedor.innerHTML = '<p style="color: #666; text-align: center;">No hay turnos agendados para este día.</p>';
+            return;
         }
 
-        function abrirModalVerTurnos() {
-            document.getElementById('modalVerTurnos').style.display = 'flex';
-            const tbody = document.getElementById('tbodyTurnosGlobal');
-            
-            if(turnosExistentes.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#666;">No hay turnos registrados.</td></tr>';
-                return;
+        contenedor.innerHTML = '';
+        turnosDelDia.forEach(t => {
+            let botonAvisoHtml = '';
+            if(t.horaOriginal !== t.horaActualizada) {
+                const msgAviso = `Hola ${t.nombre}, disculpe las molestias, su turno se ha corrido a las ${t.horaActualizada.replace(':', ' y ')} hs.`;
+                const urlWha = `https://wa.me/?text=${encodeURIComponent(msgAviso)}`;
+                botonAvisoHtml = `<a href="${urlWha}" target="_blank" class="btn-aviso-ws">AVISAR RETRASO</a>`;
             }
 
-            const turnosOrdenados = [...turnosExistentes].sort((a, b) => {
-                if(a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
-                return a.horaActualizada.localeCompare(b.horaActualizada);
-            });
-
-            tbody.innerHTML = '';
-            turnosOrdenados.forEach(t => {
-                const partesFecha = t.fecha.split('-');
-                const fechaFormateada = `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}`;
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td style="color: var(--dorado); font-weight: bold;">${fechaFormateada}</td>
-                        <td>${t.horaActualizada} hs ${t.horaOriginal !== t.horaActualizada ? `<small style="color:#777;"><br>(Orig: ${t.horaOriginal})</small>` : ''}</td>
-                        <td style="text-transform: capitalize;">${t.nombre}</td>
-                        <td><i>${t.servicio}</i></td>
-                    </tr>
-                `;
-            });
-        }
-        function cerrarModalVerTurnos() {
-            document.getElementById('modalVerTurnos').style.display = 'none';
-        }
-
-        // --- 8. NUEVAS FUNCIONES PARA BORRAR CITAS DESDE EL PANEL ---
-        function abrirModalBorrarTurnos() {
-            document.getElementById('modalBorrarTurnos').style.display = 'flex';
-            renderizarTablaBorrar();
-        }
-
-        function cerrarModalBorrarTurnos() {
-            document.getElementById('modalBorrarTurnos').style.display = 'none';
-        }
-
-        function renderizarTablaBorrar() {
-            const tbody = document.getElementById('tbodyTurnosBorrar');
-            
-            if(turnosExistentes.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#666;">No hay turnos agendados en la base de datos.</td></tr>';
-                return;
-            }
-
-            // Ordenamos de forma cronológica por comodidad del administrador
-            const turnosOrdenados = [...turnosExistentes].sort((a, b) => {
-                if(a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
-                return a.horaActualizada.localeCompare(b.horaActualizada);
-            });
-
-            tbody.innerHTML = '';
-            turnosOrdenados.forEach(t => {
-                const partesFecha = t.fecha.split('-');
-                const fechaFormateada = `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}`;
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td style="color: var(--dorado); font-weight: bold;">${fechaFormateada}</td>
-                        <td><b>${t.horaActualizada} hs</b></td>
-                        <td style="text-transform: capitalize;">${t.nombre}</td>
-                        <td><i>${t.servicio}</i></td>
-                        <td>
-                            <button onclick="eliminarCitaEspecifica('${t.fecha}', '${t.horaOriginal}', '${t.nombre}')" style="background: var(--rojo); color: white; padding: 6px 12px; margin: 0; width: auto; font-size: 0.8rem; border-radius: 4px;">Eliminar</button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        function eliminarCitaEspecifica(fecha, horaOriginal, nombre) {
-            if (!confirm(`¿Estás completamente seguro de que querés borrar la cita de "${nombre}" del día ${fecha}?`)) {
-                return;
-            }
-
-            // Filtramos el array descartando el turno que coincida perfectamente con estos tres parámetros identificadores
-            turnosExistentes = turnosExistentes.filter(t => !(t.fecha === fecha && t.horaOriginal === horaOriginal && t.nombre === nombre));
-            localStorage.setItem('turnos_maxima', JSON.stringify(turnosExistentes));
-            
-            // Actualizamos en cascada todas las vistas operativas
-            renderizarTablaBorrar();
-            listarTurnosAdmin();
-            actualizarHorarios();
-            alert("El turno fue removido con éxito de la base de datos.");
-        }
-            
-        // --- 9. INICIALIZACIÓN DE COMPONENTES ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const hoy = new Date().toISOString().split('T')[0];
-            document.getElementById('fechaCita').setAttribute('min', hoy);
-
-            document.getElementById('fechaCita').addEventListener('change', actualizarHorarios);
-            document.getElementById('fechaAdmin').addEventListener('change', listarTurnosAdmin);
-            document.getElementById('formTurno').addEventListener('submit', enviarReserva);
-            document.getElementById('formLoginAdmin').addEventListener('submit', procesarLogin);
-            document.getElementById('formAgendarAdmin').addEventListener('submit', guardarTurnoManualAdmin);
+            contenedor.innerHTML += `
+                <div class="turno-item">
+                    <span>
+                        <b>${t.horaActualizada} hs</b> 
+                        ${t.horaOriginal !== t.horaActualizada ? `<span style="color:#888; font-size:0.8rem;">(Orig: ${t.horaOriginal})</span>` : ''} 
+                        - ${t.nombre} (${t.servicio})
+                    </span>
+                    ${botonAvisoHtml}
+                </div>`;
         });
-    </script>
-</body>
-</html>
+    }
+
+    async function retrasarAgenda(minutosAdicionales) {
+        const fecha = document.getElementById('fechaAdmin').value;
+        if (!fecha) return alert("Selecciona una fecha primero.");
+
+        const turnosDelDia = turnosExistentes.filter(t => t.fecha === fecha);
+        if (turnosDelDia.length === 0) return alert("No hay turnos para retrasar hoy.");
+
+        // Actualizamos cada turno en Firebase sumando los minutos
+        for (let t of turnosDelDia) {
+            const minActuales = horaAMinutos(t.horaActualizada);
+            const nuevaHora = minutosAHora(minActuales + minutosAdicionales);
+            
+            const turnoRef = doc(db, "turnos", t.id);
+            await updateDoc(turnoRef, {
+                horaActualizada: nuevaHora
+            });
+        }
+        alert(`Se han retrasado ${minutosAdicionales} minutos los turnos del día.`);
+    }
+
+    function listarTurnosBorrar() {
+        const tbody = document.getElementById('tbodyTurnosBorrar');
+        tbody.innerHTML = '';
+        const turnosOrdenados = [...turnosExistentes].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+        turnosOrdenados.forEach(t => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${t.fecha}</td>
+                    <td>${t.horaActualizada}</td>
+                    <td>${t.nombre}</td>
+                    <td>${t.servicio}</td>
+                    <td><button onclick="eliminarTurnoFirebase('${t.id}')" style="background:var(--rojo); padding:5px; font-size:0.8rem;">Eliminar</button></td>
+                </tr>`;
+        });
+    }
+
+    async function eliminarTurnoFirebase(id) {
+        if(confirm("¿Seguro que deseas eliminar este turno? El horario quedará libre.")) {
+            await deleteDoc(doc(db, "turnos", id));
+            // Firebase actualiza la lista sola gracias al onSnapshot
+        }
+    }
+
+    // --- VINCULACIÓN AL HTML (Hacer globales las funciones) ---
+    // Como estamos en un "module", el HTML no ve estas funciones por defecto.
+    window.abrirModalLogin = () => {
+        if(document.getElementById('btnAccesoNav').innerText === "Panel Admin Activo") {
+            document.getElementById('vistaPublica').style.display = 'none';
+            document.getElementById('panelAdmin').style.display = 'block';
+        } else {
+            document.getElementById('modalLogin').style.display = 'flex';
+        }
+    };
+    window.cerrarModalLogin = () => { document.getElementById('modalLogin').style.display = 'none'; };
+    window.volverAPartePublica = () => {
+        document.getElementById('panelAdmin').style.display = 'none';
+        document.getElementById('vistaPublica').style.display = 'block';
+        document.getElementById('navPrecios').style.display = 'inline-block';
+        document.getElementById('navReservar').style.display = 'inline-block';
+    };
+    window.cerrarSesionAdmin = () => {
+        window.volverAPartePublica();
+        document.getElementById('btnAccesoNav').innerText = "Acceso";
+    };
+    window.retrasarAgenda = retrasarAgenda;
+    window.abrirModalVerTurnos = () => { document.getElementById('modalVerTurnos').style.display = 'flex'; };
+    window.cerrarModalVerTurnos = () => { document.getElementById('modalVerTurnos').style.display = 'none'; };
+    window.abrirModalBorrarTurnos = () => { 
+        document.getElementById('modalBorrarTurnos').style.display = 'flex'; 
+        listarTurnosBorrar();
+    };
+    window.cerrarModalBorrarTurnos = () => { document.getElementById('modalBorrarTurnos').style.display = 'none'; };
+    window.eliminarTurnoFirebase = eliminarTurnoFirebase;
+    
+    // Escuchar el input de fecha del panel admin para recargar la lista
+    document.getElementById('fechaAdmin').addEventListener('change', listarTurnosAdmin);
+</script>

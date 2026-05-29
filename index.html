@@ -10,44 +10,39 @@
     
     <style>
         /* Estilos para el Slider de Fotos */
-.slider-container {
-    display: flex;
-    overflow-x: auto; /* Permite el deslizamiento horizontal */
-    scroll-snap-type: x mandatory; /* Hace que las fotos "encajen" al deslizar */
-    gap: 0px; /* Sin espacio entre fotos */
-    scroll-behavior: smooth; 
-    -webkit-overflow-scrolling: touch; /* Mejora el deslizamiento en dispositivos táctiles */
-     
-}
+        .slider-container {
+            display: flex;
+            overflow-x: auto; 
+            scroll-snap-type: x mandatory; 
+            gap: 0px; 
+            scroll-behavior: smooth; 
+            -webkit-overflow-scrolling: touch; 
+        }
 
-/* Esconde la barra de scroll para que se vea más limpio */
-.slider-container::-webkit-scrollbar {
-    display: none;
-}
+        .slider-container::-webkit-scrollbar {
+            display: none;
+        }
 
-.slider-foto {
-    flex: 0 0 100%; /* Cada foto ocupa el 100% del ancho del contenedor */
-    scroll-snap-align: center; /* Alinea cada foto al centro del contenedor al deslizar */
-    height: 650px;
-    object-fit: cover; /* Asegura que la foto cubra todo el espacio sin distorsionarse */
-    display: block; /* Elimina el espacio debajo de las imágenes */ 
-}
-/* Estilo para la nota debajo de Cortes y Precios */
-.nota-precios {
-    text-align: center;    /* Centra el texto */
-    display: block;        /* Asegura que ocupe todo el ancho */
-    margin: 20px 0 40px 0; /* 20px de margen arriba y 40px abajo para separar de la lista */
-    font-weight: 300;      /* Un poco más fino para que no compita con el título puedo poner normal si quiero */
-    color: #bbb;           /* Un gris claro */
-}
+        .slider-foto {
+            flex: 0 0 100%; 
+            scroll-snap-align: center; 
+            height: 650px;
+            object-fit: cover; 
+            display: block; 
+        }
 
+        .nota-precios {
+            text-align: center;    
+            display: block;        
+            margin: 20px 0 40px 0; 
+            font-weight: 300;      
+            color: #bbb;           
+        }
 
-        
-/* Ajuste para que el formulario no se estire demasiado */
-.caja-form {
-    max-width: 500px;/*le da el ancho máximo de la foto donde deslizamos*/
-    margin: 20px auto;   /* Centra la caja en la página el 20px lo pone bien al centro*/
-}   
+        .caja-form {
+            max-width: 500px;
+            margin: 20px auto;   
+        }   
 
         :root {
             --dorado: #d4af37;
@@ -55,12 +50,16 @@
             --gris: #1f1f1f;
             --blanco: #ffffff;
             --rojo: #ff4d4d;
+            --verde:#25d366;
+            --azul: #3498db;
+            --violeta: #9b59b6;
+            --naranja: #e67e22;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         body { background-color: var(--oscuro); color: var(--blanco); scroll-behavior: smooth; }
 
-        /* Navegación (Sin 'Mi Cuenta') */
+        /* Navegación */
         header {
             background: rgba(18, 18, 18, 0.95);
             padding: 1rem 5%;
@@ -74,7 +73,8 @@
             border-bottom: 2px solid var(--dorado);
         }
         .logo { color: var(--dorado); font-weight: 600; font-size: 1.5rem; }
-        nav a { color: var(--blanco); text-decoration: none; margin-left: 15px; font-size: 0.9rem; }
+        nav a { color: var(--blanco); text-decoration: none; margin-left: 15px; font-size: 0.9rem; cursor: pointer; }
+        nav a:hover { color: var(--dorado); }
 
         /* Portada */
         .hero {
@@ -84,7 +84,7 @@
             justify-content: center;
             align-items: center;
             text-align: center;
-            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),url('marilym2.jpeg');
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('marilym2.jpeg');
             background-size: cover;
             background-position: center;
             margin-top: 60px;
@@ -111,14 +111,7 @@
         .precio { color: var(--dorado); font-size: 1.2rem; font-weight: bold; }
 
         /* Formulario de Reserva */
-        .reserva-box {
-            background: var(--gris);
-            padding: 30px;
-            border-radius: 15px;
-            max-width: 500px;
-            margin: auto;
-        }
-        label { display: block; margin-top: 15px; font-size: 0.9rem; color: #ccc; }
+        label { display: block; margin-top: 15px; font-size: 0.9rem; color: #ccc; text-align: left; }
         input, select, button {
             width: 100%;
             padding: 12px;
@@ -129,7 +122,6 @@
             border-radius: 5px;
         }
         
-        /* Estilo para turnos ocupados */
         option.ocupado {
             color: var(--rojo);
             background: #441111;
@@ -145,9 +137,107 @@
         }
         button:hover { background: #b8962d; }
 
+        /* Módulos de Modales (Login, Acciones Admin) */
+        .modal-login, .modal-admin-action {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-box {
+            background: var(--gris);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid var(--dorado);
+            width: 95%;
+            max-width: 480px;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .close-login {
+            position: absolute;
+            top: 10px; right: 15px;
+            color: white; font-size: 1.5rem; cursor: pointer;
+        }
+        #panelAdmin {
+            display: none;
+            padding-top: 100px;
+            min-height: 80vh;
+        }
+        .admin-card {
+            background: var(--gris);
+            padding: 35px;
+            border-radius: 15px;
+            border: 1px solid var(--dorado);
+            max-width: 600px;
+            margin: 30px auto;
+        }
+        .btn-delay {
+            background: #333; color: white; border: 1px solid #555;
+            padding: 12px; font-size: 1rem; cursor: pointer; margin-top: 10px;
+            transition: all 0.2s ease;
+        }
+        .btn-delay:hover { background: var(--dorado); color: var(--oscuro); border-color: var(--dorado); }
+        
+        /* Botones del menú de administración */
+        .btn-view-turns { background: var(--violeta); color: white; margin-top: 30px; }
+        .btn-view-turns:hover { background: #8e44ad; }
+        
+        .btn-book-admin { background: var(--naranja); color: white; margin-top: 12px; }
+        .btn-book-admin:hover { background: #d35400; }
+
+        .btn-back { background: var(--azul); color: white; margin-top: 12px; }
+        .btn-back:hover { background: #2980b9; }
+        
+        .btn-logout { background: var(--rojo); color: white; margin-top: 12px; }
+        .btn-logout:hover { background: #cc3333; }
+        
+        .lista-turnos-admin { margin-top: 20px; background: #121212; padding: 15px; border-radius: 8px; max-height: 300px; overflow-y: auto; }
+        .turno-item { padding: 10px; border-bottom: 1px solid #222; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Listado Global de Todos los Turnos */
+        .tabla-turnos-global {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.85rem;
+            text-align: left;
+        }
+        .tabla-turnos-global th, .tabla-turnos-global td {
+            padding: 10px;
+            border-bottom: 1px solid #333;
+        }
+        .tabla-turnos-global th {
+            color: var(--dorado);
+            border-bottom: 2px solid var(--dorado);
+        }
+        
+        /* Botón de aviso WhatsApp interno */
+        .btn-aviso-ws {
+            background: var(--verde);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            text-decoration: none;
+            font-weight: bold;
+            display: inline-block;
+            width: auto;
+            margin-top: 0;
+        }
+        .btn-aviso-ws:hover { background: #1ebd54; }
+
         @media (max-width: 600px) {
-            header { justify-content: center; }
-            nav { display: none; }
+            header { justify-content: space-between; padding: 1rem 3%; }
+            .logo { font-size: 1.2rem; }
+            nav a { margin-left: 10px; font-size: 0.8rem; }
+            .turno-item { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .btn-aviso-ws { align-self: flex-end; }
+            .tabla-turnos-global th, .tabla-turnos-global td { padding: 6px; font-size: 0.75rem; }
         }
     </style>
 </head>
@@ -156,37 +246,48 @@
     <header>
         <div class="logo">NEW STYLE MAXIMA</div>
         <nav>
-            <a href="#precios">Precios</a>
-            <a href="#agendar">Reservar</a>
+            <a href="#precios" id="navPrecios">Precios</a>
+            <a href="#agendar" id="navReservar">Reservar</a>
+            <a onclick="abrirModalLogin()" id="btnAccesoNav" style="color: var(--dorado); font-weight: bold;">Acceso</a>
         </nav>
     </header>
 
-    <section class="hero">
-        <h1>New Style Maxima</h1>
-        <p>Tu Estilo en Nuestras Manos</p>
-    </section>
+    <div id="vistaPublica">
+        <section class="hero">
+            <h1>New Style Maxima</h1>
+            <p>Tu estilo en nuestras manos</p>
+        </section>
 
-    <section id="precios">
-        <h2>Cortes y Precios </h2>
-        <p class="nota-precios">Los precios varian según largo y cantidad de cabello</p>
-        <div class="cortes-grid">
-            <div class="corte-card">
-                <h3>Corte </h3>
-                <p class="precio">$20.000</p>
+        <section id="precios">
+            <h2>Cortes y Precios</h2>
+            <p class="nota-precios">Los precios varían según largo y cantidad de cabello</p>
+            <div class="cortes-grid">
+                <div class="corte-card">
+                    <h3>Corte</h3>
+                    <p class="precio">$20.000</p>
+                </div>
+                <div class="corte-card">
+                    <h3>Alisado Desde (Según largo desde)</h3>
+                    <p class="precio">$33.000</p>
+                </div>
+                <div class="corte-card">
+                    <h3>Keratina(Según largo desde)</h3>
+                    <p class="precio">$33.000</p>
+                </div>
+                <div class="corte-card">
+                    <h3>Color  (Según largo desde)</h3>
+                    <p class="precio">$37.000</p>
+                </div>
+                <div class="corte-card">
+                    <h3>Balayage, Iluminación Claritos (desde)</h3>
+                    <p class="precio">$55.000</p>    
+                </div>
+                <div class="corte-card">
+                    <h3>Retoque de Raíces (Según largo desde)</h3>
+                    <p class="precio">$45.000</p>
+                </div>  
             </div>
-            <div class="corte-card">
-                <h3>Alisado o Keratina Desde</h3>
-                <p class="precio">$33.000</p>
-            </div>
-            <div class="corte-card">
-                <h3>Color Largo (Desde)</h3>
-                <p class="precio">$37.000</p>
-            </div>
-            <div class="corte-card">
-                <h3>Balayge, Iluminación Claritos (desde)</h3>
-                <p class="precio">$55.000</p>     
-        </div>
-    </section>
+        </section>
 
         <div class="caja-form">
             <h2>Nuestros Trabajos</h2>
@@ -209,18 +310,114 @@
             </p>
         </div>  
 
-    <section id="agendar">
-        <h2>Agendar Turno</h2>
-        <div class="contenedor-registro">
-            <form id="formTurno">
-                <label>Nombre del Cliente:</label>
-                <input type="text" id="nombreCliente" placeholder="Ej: Juan Pérez" required>
+        <section id="agendar">
+            <h2>Agendar Turno</h2>
+            <div class="caja-form">
+                <form id="formTurno">
+                    <label>Nombre del Cliente:</label>
+                    <input type="text" id="nombreCliente" placeholder="Ej: Juan Pérez" required>
 
-                <label>Selecciona la Fecha:</label>
-                <input type="date" id="fechaCita" required>
+                    <label>Selecciona la Fecha:</label>
+                    <input type="date" id="fechaCita" required>
+                    
+                    <label>Selecciona el Horario:</label>
+                    <select id="horaCita" required>
+                        <option value="">-- Elige una hora --</option>
+                        <option value="10:00">10:00 AM</option>
+                        <option value="10:30">10:30 AM</option>
+                        <option value="11:30">11:30 AM</option>
+                        <option value="12:00">12:00 PM</option>
+                        <option value="13:30">13:30 PM</option>
+                        <option value="14:00">14:00 PM</option>
+                        <option value="14:30">14:30 PM</option>
+                        <option value="15:00">15:00 PM</option>
+                        <option value="15:30">15:30 PM</option>
+                        <option value="16:00">16:00 PM</option>
+                        <option value="16:30">16:30 PM</option>
+                        <option value="17:00">17:00 PM</option>
+                        <option value="18:30">18:30 PM</option>
+                        <option value="19:00">19:00 PM</option>
+                    </select>
+
+                    <label>¿Qué servicio quieres?</label>
+                    <select id="servicioCita" required>
+                        <option value="Cortes">Corte </option>
+                        <option value="RetoqueDeColor">Retoque de Raíces</option>
+                        <option value="Color">Color Completo</option>
+                        <option value="Alisado">Alisado</option>            
+                        <option value="Keratina">Keratina</option>
+                    </select>
+
+                    <button type="submit">RESERVAR POR WHATSAPP</button>
+                </form>
+            </div>
+        </section> 
+    </div>
+
+    <div class="modal-login" id="modalLogin">
+        <div class="login-box">
+            <span class="close-login" onclick="cerrarModalLogin()">&times;</span>
+            <h2 style="font-size: 1.5rem; margin-bottom: 20px;">Acceso Administrador</h2>
+            <form id="formLoginAdmin">
+                <label>Usuario:</label>
+                <input type="text" id="usuarioAdmin" placeholder="Ingresa tu usuario" required>
                 
-                <label>Selecciona el Horario:</label>
-                <select id="horaCita" required>
+                <label>Contraseña:</label>
+                <input type="password" id="passAdmin" placeholder="Ingresa tu clave" required>
+                
+                <button type="submit">INGRESAR AL PANEL</button>
+            </form>
+        </div>
+    </div>
+
+    <section id="panelAdmin">
+        <div class="admin-card">
+            <h2 style="margin-bottom: 10px;">Panel de Control</h2>
+            <p style="text-align: center; color: #aaa; margin-bottom: 25px;">Gestión de demoras operativas en la agenda</p>
+            
+            <label>1. Selecciona la Fecha a Modificar:</label>
+            <input type="date" id="fechaAdmin" required>
+            
+            <label style="margin-top: 20px;">2. Desplazar horarios de esta fecha:</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <button type="button" class="btn-delay" onclick="retrasarAgenda(5)">+5 MINUTOS</button>
+                <button type="button" class="btn-delay" onclick="retrasarAgenda(10)">+10 MINUTOS</button>
+                <button type="button" class="btn-delay" onclick="retrasarAgenda(20)">+20 MINUTOS</button>
+                <button type="button" class="btn-delay" onclick="retrasarAgenda(30)">+30 MINUTOS</button>
+            </div>
+
+            <h3 style="margin-top: 30px; font-size: 1rem; color: var(--dorado);">Turnos programados del día seleccionado:</h3>
+            <div class="lista-turnos-admin" id="contenedorTurnosDia">
+                <p style="color: #666; text-align: center; font-size: 0.9rem;">Elige una fecha para listar los turnos...</p>
+            </div>
+
+            <button type="button" class="btn-view-turns" onclick="abrirModalVerTurnos()">VER MIS TURNOS</button>
+
+            <button type="button" class="btn-book-admin" onclick="abrirModalAgendarAdmin()">AGENDAR CITA</button>
+
+            <button type="button" class="btn-logout" style="background: var(--rojo); margin-top: 12px;" onclick="abrirModalBorrarTurnos()">BORRAR CITAS</button>
+
+            <button type="button" class="btn-back" onclick="volverAPartePublica()">VOLVER ATRÁS</button>
+            
+            <button type="button" class="btn-logout" onclick="cerrarSesionAdmin()">CERRAR SESIÓN</button>
+        </div>
+    </section>
+
+    <div class="modal-admin-action" id="modalAgendarAdmin">
+        <div class="login-box">
+            <span class="close-login" onclick="cerrarModalAgendarAdmin()">&times;</span>
+            <h2 style="font-size: 1.4rem; color: var(--naranja); margin-bottom: 15px; text-align: center;">Agendar Turno Manual</h2>
+            <p style="color:#aaa; font-size:0.85rem; text-align:center; margin-bottom:15px;">El sistema validará de forma inteligente que los rangos de duración no se superpongan.</p>
+            
+            <form id="formAgendarAdmin">
+                <label>Nombre del Cliente:</label>
+                <input type="text" id="nombreAdminManual" placeholder="Nombre completo del cliente" required>
+
+                <label>Fecha del Turno:</label>
+                <input type="date" id="fechaAdminManual" required>
+
+                <label>Horario:</label>
+                <select id="horaAdminManual" required>
                     <option value="">-- Elige una hora --</option>
                     <option value="10:00">10:00 AM</option>
                     <option value="10:30">10:30 AM</option>
@@ -235,74 +432,170 @@
                     <option value="16:30">16:30 PM</option>
                     <option value="17:00">17:00 PM</option>
                     <option value="18:30">18:30 PM</option>
+                    <option value="19:00">19:00 PM</option>
                 </select>
 
-                <label>¿Qué servicio quieres?</label>
-                <select id="servicioCita">
+                <label>Servicio a realizar:</label>
+                <select id="servicioAdminManual" required>
                     <option value="Cortes">Corte</option>
-                    <option value="Color">Color (Según el cabello)</option>
-                    <option value="Alisado o Keratina Desde">Alisado o Keratina </option>            
-                    <option value="RetoqueDeColor">Retoque de Color(Segun el cabello)</option>
+                    <option value="RetoqueDeColor">Retoque de Raíces</option>
+                    <option value="Color">Color Completo</option>
+                    <option value="Alisado">Alisado</option>            
+                    <option value="Keratina">Keratina</option>
                 </select>
 
-                <button type="submit">RESERVAR POR WHATSAPP</button>
+                <button type="submit" style="background: var(--naranja); color: white;">GUARDAR EN LA AGENDA</button>
             </form>
-        </div> 
+        </div>
     </div>
-</section>
+
+    <div class="modal-admin-action" id="modalVerTurnos">
+        <div class="login-box" style="max-width: 650px;">
+            <span class="close-login" onclick="cerrarModalVerTurnos()">&times;</span>
+            <h2 style="font-size: 1.4rem; color: var(--dorado); margin-bottom: 15px; text-align: center;">Todos Mis Turnos</h2>
+            
+            <div style="max-height: 60vh; overflow-y: auto;">
+                <table class="tabla-turnos-global">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Hora Actual</th>
+                            <th>Cliente</th>
+                            <th>Servicio</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyTurnosGlobal">
+                        </tbody>
+                </table>
+            </div>
+            <button type="button" onclick="cerrarModalVerTurnos()" style="background:#444; margin-top:20px;">CERRAR LISTADO</button>
+        </div>
+    </div>
+
+    <div class="modal-admin-action" id="modalBorrarTurnos">
+        <div class="login-box" style="max-width: 650px;">
+            <span class="close-login" onclick="cerrarModalBorrarTurnos()">&times;</span>
+            <h2 style="font-size: 1.4rem; color: var(--rojo); margin-bottom: 15px; text-align: center;">Eliminar Turnos de la Agenda</h2>
+            <p style="color:#aaa; font-size:0.85rem; text-align:center; margin-bottom:15px;">Al eliminar un turno, el horario quedará inmediatamente liberado para nuevos clientes.</p>
+            
+            <div style="max-height: 60vh; overflow-y: auto;">
+                <table class="tabla-turnos-global">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Horario</th>
+                            <th>Cliente</th>
+                            <th>Servicio</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyTurnosBorrar">
+                        </tbody>
+                </table>
+            </div>
+            <button type="button" onclick="cerrarModalBorrarTurnos()" style="background:#444; margin-top:20px;">VOLVER AL PANEL</button>
+        </div>
+    </div>
 
     <script>
         // --- 1. CONFIGURACIÓN DEL WHATSAPP ---
-        const MI_TELEFONO = "5491151812982"; // <-- CAMBIA ESTO por tu número real (con código de país)
-        // Lista de fechas específicas que el cliente quiera cerrar (Formato: Año-mes-día)
-        // Aquí puedes agregar los sábados que necesites cerrar
-       // const fechasCerradasEspeciales = ["2026-05-16", "2026-05-23"];
+        const MI_TELEFONO = "5491170296680"; 
 
-        // Déjalo así cuando no quieras bloquear ningún día extra:
         const fechasCerradasEspeciales = [];
         
-        // --- 2. BASE DE DATOS LOCAL (Simulada) ---
-        // Recupera los turnos ya guardados en el navegador
+        // --- 2. BASE DE DATOS LOCAL ---
         let turnosExistentes = JSON.parse(localStorage.getItem('turnos_maxima')) || [];
+    
+        function obtenerDiaDeLaSemana(fechaTexto) {
+            const fecha = new Date(fechaTexto + 'T00:00:00');
+            return fecha.getDay(); // 0 es Domingo
+        }
+
+        // --- 3. NUEVAS FUNCIONES DE TIEMPO Y CONDICIONES DE DURACIÓN ---
         
-        // B. EL MÉTODO HELPER (Como un método estático en Java)
-function obtenerDiaDeLaSemana(fechaTexto) {
-    const fecha = new Date(fechaTexto + 'T00:00:00');
-    return fecha.getDay(); // 0 es Domingo
-    }
-        // --- 3. FUNCIÓN: BLOQUEAR HORARIOS OCUPADOS ---
-const actualizarHorarios = () => {
-    const inputFecha = document.getElementById('fechaCita');
-    const fechaSeleccionada = inputFecha.value;
-    const selectorHora = document.getElementById('horaCita');
-    const opciones = selectorHora.querySelectorAll('option');
+        // Retorna la duración en minutos de cada servicio exacto pedido por el usuario
+        function obtenerDuracionServicio(servicio) {
+            switch(servicio) {
+                case 'Cortes': return 25;
+                case 'RetoqueDeColor': return 60;
+                case 'Color': return 60;
+                case 'Alisado': return 90;
+                case 'Keratina': return 40;
+                default: return 30; 
+            }
+        }
 
-    if (!fechaSeleccionada) return;
-    const dia = obtenerDiaDeLaSemana(fechaSeleccionada);//defino variable dia y le asigno el resultado del método helper que me dice el día de la semana de la fecha seleccionada
-        if (dia === 0) {
-        alert("Los Domingos Cerrado");
-        inputFecha.value = ""; 
-        return; // "Corta" la función acá y no sigue
-    }
+        // Convierte un string de hora (ej: "10:30") a minutos totales desde el inicio del día (ej: 630)
+        function horaAMinutos(horaStr) {
+            const partes = horaStr.split(':');
+            return (parseInt(partes[0], 10) * 60) + parseInt(partes[1], 10);
+        }
 
-    if (fechasCerradasEspeciales.includes(fechaSeleccionada)) {
-        alert("La barbería permanecerá cerrada este día.");
-        inputFecha.value = "";
-        return; // "Corta" la función acá
-    }
-        //Bloqueo de horas reservadas
+        // Verifica si un rango de tiempo se pisa con un turno existente usando álgebra de intervalos: max(S1, S2) < min(E1, E2)
+        function verificarSuperposicion(fecha, horaInicioStr, servicio) {
+            const nuevoInicio = horaAMinutos(horaInicioStr);
+            const nuevaDuracion = obtenerDuracionServicio(servicio);
+            const nuevoFin = nuevoInicio + nuevaDuracion;
+
+            for (let i = 0; i < turnosExistentes.length; i++) {
+                const t = turnosExistentes[i];
+                if (t.fecha === fecha) {
+                    // Usamos horaActualizada porque si el admin desplazó la agenda, el tiempo real ocupado cambió
+                    const extInicio = horaAMinutos(t.horaActualizada);
+                    const extDuracion = obtenerDuracionServicio(t.servicio);
+                    const extFin = extInicio + extDuracion;
+
+                    if (Math.max(nuevoInicio, extInicio) < Math.min(nuevoFin, extFin)) {
+                        return t; // Retorna el objeto que está causando la colisión
+                    }
+                }
+            }
+            return null;
+        }
+
+        // --- 4. FUNCIÓN: BLOQUEAR HORARIOS OCUPADOS EN VISTA PÚBLICA (CON RANGOS DÍNÁMICOS) ---
+        const actualizarHorarios = () => {
+            const inputFecha = document.getElementById('fechaCita');
+            const fechaSeleccionada = inputFecha.value;
+            const selectorHora = document.getElementById('horaCita');
+            const opciones = selectorHora.querySelectorAll('option');
+
+            if (!fechaSeleccionada) return;
+
+            const dia = obtenerDiaDeLaSemana(fechaSeleccionada);
+                
+            if (dia === 0) {
+                alert("Los Domingos Cerrado");
+                inputFecha.value = ""; 
+                return;
+            }
+
+            if (fechasCerradasEspeciales.includes(fechaSeleccionada)) {
+                alert("La barbería permanecerá cerrada este día.");
+                inputFecha.value = "";
+                return;
+            }
+            
             opciones.forEach(opcion => {
-                // Si la opción tiene un valor de hora
                 if(opcion.value) {
-                    // Buscamos si ya existe un turno para esa fecha y esa hora
-                    const ocupado = turnosExistentes.find(t => t.fecha === fechaSeleccionada && t.hora === opcion.value);
+                    const minutosOpcion = horaAMinutos(opcion.value);
+                    
+                    // Buscamos si la hora de esta opción cae dentro de la duración de algún turno del día
+                    const ocupado = turnosExistentes.find(t => {
+                        if(t.fecha === fechaSeleccionada) {
+                            const inicio = horaAMinutos(t.horaActualizada);
+                            const duracion = obtenerDuracionServicio(t.servicio);
+                            const fin = inicio + duracion;
+                            return (minutosOpcion >= inicio && minutosOpcion < fin);
+                        }
+                        return false;
+                    });
                     
                     if(ocupado) {
-                        opcion.innerText = `${opcion.value} - TURNO RESERVADO`;
+                        opcion.innerText = `${opcion.value} - HORA OCUPADA`;
                         opcion.classList.add('ocupado');
-                        opcion.disabled = true; // No permite seleccionarlo
+                        opcion.disabled = true; 
                     } else {
-                        // Limpia el estado si la fecha cambia a una libre
                         opcion.innerText = opcion.value;
                         opcion.classList.remove('ocupado');
                         opcion.disabled = false;
@@ -311,61 +604,328 @@ const actualizarHorarios = () => {
             });
         };
 
-        // --- 4. FUNCIÓN: ENVIAR RESERVA ---
+        // --- 5. FUNCIÓN: ENVIAR RESERVA CLIENTE PÚBLICO ---
         const enviarReserva = (e) => {
-        e.preventDefault();// Evita que la página se recargue al enviar el formulario   
+            e.preventDefault();
 
             const nombre = document.getElementById('nombreCliente').value;
             const fecha = document.getElementById('fechaCita').value;
             const hora = document.getElementById('horaCita').value;
             const servicio = document.getElementById('servicioCita').value;
 
-            // 1. VALIDACIÓN EXTRA (Estilo Java: prevenir nulos)
-          if (!nombre || !fecha || !hora) {
-           alert("Por favor, completa todos los campos.");
-           return;
-           }
+            if (!nombre || !fecha || !hora || !servicio) {
+                alert("Por favor, completa todos los campos.");
+                return;
+            }
 
-           // --- SOLUCIÓN ERROR 2: Evitar reserva duplicada ---
-        const yaExiste = turnosExistentes.some(t => t.fecha === fecha && t.hora === hora);
-        
-        if (yaExiste) {
-            alert("¡Ups! Alguien acaba de reservar este horario. Por favor elige otro.");
-            actualizarHorarios(); // Refrescamos la lista para que vea el cambio
-            return;
-        }
-            // Guardar en la "base de datos" local
-            const nuevoTurno = { nombre, fecha, hora, servicio };
+            // CONTROL INTELIGENTE DE SUPERPOSICIÓN DE TRABAJOS
+            const conflicto = verificarSuperposicion(fecha, hora, servicio);
+            if (conflicto) {
+                alert(`¡Lo sentimos! Ese horario está reservado  ${conflicto.nombre} (${conflicto.servicio}), quien agendó a las ${conflicto.horaActualizada} hs. Por favor, selecciona otro horario libre.`);
+                actualizarHorarios(); 
+                return;
+            }
+
+            const nuevoTurno = { nombre, fecha, horaOriginal: hora, horaActualizada: hora, servicio };
             turnosExistentes.push(nuevoTurno);
             localStorage.setItem('turnos_maxima', JSON.stringify(turnosExistentes));
 
-            // Refrescar visualmente el formulario
             actualizarHorarios();
 
-           // Crear el mensaje para WhatsApp
             const mensaje = `Hola New Style Maxima! Quiero agendar un turno:%0A*Nombre:* ${nombre}%0A*Fecha:* ${fecha}%0A*Hora:* ${hora}%0A*Servicio:* ${servicio}`;
-            
-            // Abrir WhatsApp con el mensaje armado si es celular, o nueva si es PC
             const url = `https://wa.me/${MI_TELEFONO}?text=${mensaje}`;
-            //Brimos en la misma pestaña 
+
             window.open(url, '_blank');
 
-            // 5. LIMPIAR FORMULARIO
             document.getElementById('formTurno').reset();
-            alert("¡Turno registrado! Si no se abrió WhatsApp, contactanos al " + MI_TELEFONO);
+            alert("¡Turno registrado con éxito!");
         };
 
-        // --- 5. INICIALIZACIÓN ---
+        // --- 6. SISTEMA DE LOGIN Y CONTROL ---
+
+        function abrirModalLogin() {
+            if(document.getElementById('btnAccesoNav').innerText === "Panel Admin Activo") {
+                document.getElementById('vistaPublica').style.display = 'none';
+                document.getElementById('panelAdmin').style.display = 'block';
+            } else {
+                document.getElementById('modalLogin').style.display = 'flex';
+            }
+        }
+
+        function cerrarModalLogin() {
+            document.getElementById('modalLogin').style.display = 'none';
+            document.getElementById('usuarioAdmin').value = '';
+            document.getElementById('passAdmin').value = '';
+        }
+
+        const procesarLogin = (e) => {
+            e.preventDefault();
+            const usuario = document.getElementById('usuarioAdmin').value;
+            const clave = document.getElementById('passAdmin').value;
+
+            if ((usuario === "Maxima" && clave === "1975") || (usuario === "maxima" && clave === "1975")) {
+                cerrarModalLogin();
+                
+                document.getElementById('vistaPublica').style.display = 'none';
+                document.getElementById('panelAdmin').style.display = 'block';
+                
+                document.getElementById('navPrecios').style.display = 'none';
+                document.getElementById('navReservar').style.display = 'none';
+                document.getElementById('btnAccesoNav').innerText = "Panel Admin Activo";
+                
+                const hoy = new Date().toISOString().split('T')[0];
+                document.getElementById('fechaAdmin').value = hoy;
+                listarTurnosAdmin();
+            } else {
+                alert("Usuario o Contraseña incorrectos. Verifica los datos.");
+            }
+        };
+
+        function volverAPartePublica() {
+            document.getElementById('panelAdmin').style.display = 'none';
+            document.getElementById('vistaPublica').style.display = 'block';
+            
+            document.getElementById('navPrecios').style.display = 'inline-block';
+            document.getElementById('navReservar').style.display = 'inline-block';
+            document.getElementById('btnAccesoNav').innerText = "Panel Admin Activo";
+        }
+
+        function cerrarSesionAdmin() {
+            document.getElementById('panelAdmin').style.display = 'none';
+            document.getElementById('vistaPublica').style.display = 'block';
+            
+            document.getElementById('navPrecios').style.display = 'inline-block';
+            document.getElementById('navReservar').style.display = 'inline-block';
+            document.getElementById('btnAccesoNav').innerText = "Acceso";
+            actualizarHorarios();
+        }
+
+        function listarTurnosAdmin() {
+            const fechaSeleccionada = document.getElementById('fechaAdmin').value;
+            const contenedor = document.getElementById('contenedorTurnosDia');
+            
+            if(!fechaSeleccionada) return;
+
+            const turnosDelDia = turnosExistentes.filter(t => t.fecha === fechaSeleccionada);
+            turnosDelDia.sort((a, b) => a.horaActualizada.localeCompare(b.horaActualizada));
+
+            if(turnosDelDia.length === 0) {
+                contenedor.innerHTML = '<p style="color: #666; text-align: center; font-size: 0.9rem;">No hay turnos agendados para este día.</p>';
+                return;
+            }
+
+            contenedor.innerHTML = '';
+            turnosDelDia.forEach(t => {
+                let botonAvisoHtml = '';
+                if(t.horaOriginal !== t.horaActualizada) {
+                    const msgAviso = `Disculpe las molestias , su turno se ha corrido de ${t.horaOriginal} hs a ${t.horaActualizada.replace(':', ' y ')}, cualquier inconveniente mandar un mesaje`;
+                    const urlWha = `https://wa.me/?text=${encodeURIComponent(msgAviso)}`;
+                    
+                    botonAvisoHtml = `<a href="${urlWha}" target="_blank" class="btn-aviso-ws">AVISAR RETRASO</a>`;
+                }
+
+                contenedor.innerHTML += `
+                    <div class="turno-item">
+                        <span>
+                            <b>${t.horaActualizada} hs</b> 
+                            ${t.horaOriginal !== t.horaActualizada ? `<span style="color:#888; font-size:0.8rem;">(Original: ${t.horaOriginal})</span>` : ''} 
+                            - ${t.nombre} <i style="color:var(--dorado); font-size:0.85rem;">(${t.servicio})</i>
+                        </span> 
+                        ${botonAvisoHtml}
+                    </div>`;
+            });
+        }
+
+        function retrasarAgenda(minutosAgregar) {
+            const fechaAdmin = document.getElementById('fechaAdmin').value;
+
+            if(!fechaAdmin) {
+                alert("Por favor selecciona una fecha válida primero.");
+                return;
+            }
+
+            const tieneTurnos = turnosExistentes.some(t => t.fecha === fechaAdmin);
+            if (!tieneTurnos) {
+                alert("No hay ningún turno agendado en esta fecha para modificar.");
+                return;
+            }
+
+            if (!confirm(`¿Confirmas que deseas mover todos los turnos del día ${fechaAdmin} +${minutosAgregar} minutos adelante?`)) {
+                return;
+            }
+
+            turnosExistentes = turnosExistentes.map(turno => {
+                if(turno.fecha === fechaAdmin) {
+                    let partes = turno.horaActualizada.split(':');
+                    let horasEnteras = parseInt(partes[0], 10);
+                    let minutosEnteros = parseInt(partes[1], 10);
+
+                    let minutosTotales = (horasEnteras * 60) + minutosEnteros + minutosAgregar;
+
+                    let nuevasHoras = Math.floor(minutosTotales / 60);
+                    let nuevosMinutos = minutesTotales % 60;
+
+                    let horaString = nuevasHoras < 10 ? '0' + nuevasHoras : nuevasHoras;
+                    let minutoString = nuevosMinutos < 10 ? '0' + nuevosMinutos : nuevosMinutos;
+
+                    turno.horaActualizada = `${horaString}:${minutoString}`;
+                }
+                return turno;
+            });
+
+            localStorage.setItem('turnos_maxima', JSON.stringify(turnosExistentes));
+            listarTurnosAdmin();
+            alert(`¡Agenda desplazada y recalculada con éxito!`);
+        }
+
+        // --- 7. ADMINISTRACIÓN DE TURNOS MANUALES (ADMIN) ---
+
+        function abrirModalAgendarAdmin() {
+            document.getElementById('modalAgendarAdmin').style.display = 'flex';
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('fechaAdminManual').setAttribute('min', hoy);
+        }
+        function cerrarModalAgendarAdmin() {
+            document.getElementById('modalAgendarAdmin').style.display = 'none';
+            document.getElementById('formAgendarAdmin').reset();
+        }
+
+        function guardarTurnoManualAdmin(e) {
+            e.preventDefault();
+            
+            const nombre = document.getElementById('nombreAdminManual').value;
+            const fecha = document.getElementById('fechaAdminManual').value;
+            const hora = document.getElementById('horaAdminManual').value;
+            const servicio = document.getElementById('servicioAdminManual').value;
+
+            if(!nombre || !fecha || !hora || !servicio) {
+                alert("Por favor completa todos los campos.");
+                return;
+            }
+
+            if(obtenerDiaDeLaSemana(fecha) === 0) {
+                alert("Los domingos la peluquería se encuentra cerrada.");
+                return;
+            }
+
+            // CONTROL DE SUPERPOSICIÓN EN GUARDADO MANUAL
+            const conflicto = verificarSuperposicion(fecha, hora, servicio);
+            if(conflicto) {
+                alert(`Error de colisión: Este nuevo turno interfiere con el rango ocupado por el cliente ${conflicto.nombre} (${conflicto.servicio}), agendado a las ${conflicto.horaActualizada} hs.`);
+                return;
+            }
+
+            const nuevoTurnoManual = { nombre, fecha, horaOriginal: hora, horaActualizada: hora, servicio };
+            turnosExistentes.push(nuevoTurnoManual);
+            localStorage.setItem('turnos_maxima', JSON.stringify(turnosExistentes));
+            
+            listarTurnosAdmin();
+            cerrarModalAgendarAdmin();
+            alert("¡Turno guardado de forma segura en la base de datos!");
+        }
+
+        function abrirModalVerTurnos() {
+            document.getElementById('modalVerTurnos').style.display = 'flex';
+            const tbody = document.getElementById('tbodyTurnosGlobal');
+            
+            if(turnosExistentes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#666;">No hay turnos registrados.</td></tr>';
+                return;
+            }
+
+            const turnosOrdenados = [...turnosExistentes].sort((a, b) => {
+                if(a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
+                return a.horaActualizada.localeCompare(b.horaActualizada);
+            });
+
+            tbody.innerHTML = '';
+            turnosOrdenados.forEach(t => {
+                const partesFecha = t.fecha.split('-');
+                const fechaFormateada = `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}`;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="color: var(--dorado); font-weight: bold;">${fechaFormateada}</td>
+                        <td>${t.horaActualizada} hs ${t.horaOriginal !== t.horaActualizada ? `<small style="color:#777;"><br>(Orig: ${t.horaOriginal})</small>` : ''}</td>
+                        <td style="text-transform: capitalize;">${t.nombre}</td>
+                        <td><i>${t.servicio}</i></td>
+                    </tr>
+                `;
+            });
+        }
+        function cerrarModalVerTurnos() {
+            document.getElementById('modalVerTurnos').style.display = 'none';
+        }
+
+        // --- 8. NUEVAS FUNCIONES PARA BORRAR CITAS DESDE EL PANEL ---
+        function abrirModalBorrarTurnos() {
+            document.getElementById('modalBorrarTurnos').style.display = 'flex';
+            renderizarTablaBorrar();
+        }
+
+        function cerrarModalBorrarTurnos() {
+            document.getElementById('modalBorrarTurnos').style.display = 'none';
+        }
+
+        function renderizarTablaBorrar() {
+            const tbody = document.getElementById('tbodyTurnosBorrar');
+            
+            if(turnosExistentes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#666;">No hay turnos agendados en la base de datos.</td></tr>';
+                return;
+            }
+
+            // Ordenamos de forma cronológica por comodidad del administrador
+            const turnosOrdenados = [...turnosExistentes].sort((a, b) => {
+                if(a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
+                return a.horaActualizada.localeCompare(b.horaActualizada);
+            });
+
+            tbody.innerHTML = '';
+            turnosOrdenados.forEach(t => {
+                const partesFecha = t.fecha.split('-');
+                const fechaFormateada = `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}`;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="color: var(--dorado); font-weight: bold;">${fechaFormateada}</td>
+                        <td><b>${t.horaActualizada} hs</b></td>
+                        <td style="text-transform: capitalize;">${t.nombre}</td>
+                        <td><i>${t.servicio}</i></td>
+                        <td>
+                            <button onclick="eliminarCitaEspecifica('${t.fecha}', '${t.horaOriginal}', '${t.nombre}')" style="background: var(--rojo); color: white; padding: 6px 12px; margin: 0; width: auto; font-size: 0.8rem; border-radius: 4px;">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function eliminarCitaEspecifica(fecha, horaOriginal, nombre) {
+            if (!confirm(`¿Estás completamente seguro de que querés borrar la cita de "${nombre}" del día ${fecha}?`)) {
+                return;
+            }
+
+            // Filtramos el array descartando el turno que coincida perfectamente con estos tres parámetros identificadores
+            turnosExistentes = turnosExistentes.filter(t => !(t.fecha === fecha && t.horaOriginal === horaOriginal && t.nombre === nombre));
+            localStorage.setItem('turnos_maxima', JSON.stringify(turnosExistentes));
+            
+            // Actualizamos en cascada todas las vistas operativas
+            renderizarTablaBorrar();
+            listarTurnosAdmin();
+            actualizarHorarios();
+            alert("El turno fue removido con éxito de la base de datos.");
+        }
+            
+        // --- 9. INICIALIZACIÓN DE COMPONENTES ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Establece el mínimo de fecha a hoy
             const hoy = new Date().toISOString().split('T')[0];
             document.getElementById('fechaCita').setAttribute('min', hoy);
 
-            // Escuchar cuando cambian la fecha para marcar las horas ocupadas
             document.getElementById('fechaCita').addEventListener('change', actualizarHorarios);
-
-            // Escuchar el envío del formulario
+            document.getElementById('fechaAdmin').addEventListener('change', listarTurnosAdmin);
             document.getElementById('formTurno').addEventListener('submit', enviarReserva);
+            document.getElementById('formLoginAdmin').addEventListener('submit', procesarLogin);
+            document.getElementById('formAgendarAdmin').addEventListener('submit', guardarTurnoManualAdmin);
         });
     </script>
 </body>
